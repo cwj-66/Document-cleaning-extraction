@@ -1,0 +1,25 @@
+# 虚拟环境
+.venv/
+venv/
+
+# Python 缓存
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Jupyter
+.ipynb_checkpoints/
+
+# 临时目录
+_temp_unstructured/
+
+# 环境变量与密钥
+.env
+.env.*
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# Office 临时文件
+~$*
