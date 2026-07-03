@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Document Parsing Workshop — Basic HTML</title>
+</head>
+<body>
+
+<h1>Document Parsing Workshop</h1>
+<p>This sample covers the most common HTML elements you will encounter when building a RAG pipeline. The goal is to extract clean text while preserving structure such as headings, lists, and tables.</p>
+
+<h2>1. Why Clean HTML First</h2>
+<p>Raw web pages often contain navigation bars, cookie banners, scripts, and footer links. Before chunking, you should remove boilerplate and keep only the main content. A good parser distinguishes between narrative paragraphs and metadata like dates or author names.</p>
+<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+
+<ul>
+    <li>Remove headers and footers</li>
+    <li>Extract titles and body paragraphs</li>
+    <li>Preserve table row and column relationships</li>
+    <ul>
+        <li>Nested lists should stay in reading order</li>
+        <li>Sub-items often carry important detail</li>
+    </ul>
+    <li>Skip empty elements and duplicate whitespace</li>
+</ul>
+
+<h2>2. Supported Block Types</h2>
+<p>The table below maps HTML tags to the block types used in our parser output schema.</p>
+
+<table border="1">
+    <tr>
+        <th>HTML Tag</th>
+        <th>Block Type</th>
+        <th>Notes</th>
+    </tr>
+    <tr>
+        <td>h1 – h6</td>
+        <td>title</td>
+        <td>Use font size or tag level to infer hierarchy</td>
+    </tr>
+    <tr>
+        <td>p</td>
+        <td>paragraph</td>
+        <td>Merge hyphenated line breaks when needed</td>
+    </tr>
+    <tr>
+        <td>table</td>
+        <td>table</td>
+        <td>Flatten cells left-to-right, top-to-bottom</td>
+    </tr>
+    <tr>
+        <td>ul / ol</td>
+        <td>list</td>
+        <td>Keep bullet or number prefix for context</td>
+    </tr>
+    <tr>
+        <td>a</td>
+        <td>link</td>
+        <td>Prefer link text over raw URL when both exist</td>
+    </tr>
+</table>
+
+<h3>2.1 Inline Formatting</h3>
+<p>Inline tags such as <strong>bold</strong>, <em>italic</em>, and <a href="#section-3">internal links</a> should be stripped or normalized to plain text depending on your downstream model. Most embedding models work best with unformatted strings.</p>
+
+<h2>3. Chunking Guidelines</h2>
+<ol>
+    <li>Split on heading boundaries when possible</li>
+    <li>Keep tables as single chunks if they fit the token limit</li>
+    <li>Attach section titles as metadata rather than repeating them in every chunk</li>
+    <li>Record parse warnings when structure looks ambiguous</li>
+</ol>
+
+<p id="section-3">When in doubt, print the element list from your partitioner and inspect ordering before sending chunks to the vector store. Small mistakes in reading order are hard to fix after indexing.</p>
+
+</body>
+</html>
