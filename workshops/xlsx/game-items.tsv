@@ -1,0 +1,8 @@
+item_id	name	type	rarity	price_gold
+1001	Iron Sword	Weapon	Common	50
+1002	Steel Shield	Armor	Common	80
+1003	Health Potion	Consumable	Common	25
+1004	Fire Staff	Weapon	Rare	320
+1005	Leather Boots	Armor	Common	45
+1006	Speed Ring	Accessory	Uncommon	150
+1007	Dragon Scale	Material	Legendary	999
