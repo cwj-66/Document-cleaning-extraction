@@ -1,0 +1,50 @@
+MIME-Version: 1.0
+Date: Wed, 15 Jan 2026 08:00:00 -0500
+Message-ID: <security-brief-2026q1@awareness.example.com>
+Subject: Q1 Security Awareness Briefing — Insider Threat & Phishing
+From: Security Team <security@awareness.example.com>
+To: All Staff <staff@awareness.example.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
+
+Dear colleagues,
+
+This quarterly briefing summarizes the most common insider-threat and phishing patterns observed in our environment. Please review before the mandatory training deadline on January 31.
+
+SECTION 1 — INSIDER THREAT INDICATORS
+
+Insider threats may involve employees, contractors, or partners who misuse legitimate access. Watch for these behavioral signals:
+
+- Unusual after-hours access to sensitive repositories
+- Large downloads to personal cloud storage accounts
+- Attempts to bypass DLP controls or disable logging
+- Repeated failed attempts to access systems outside job scope
+
+SECTION 2 — PHISHING RED FLAGS
+
+Modern phishing emails often mimic internal IT tickets or HR notices. Common indicators include:
+
+1. Urgent language demanding immediate password reset
+2. Mismatch between display name and actual sender domain
+3. Links that resolve to newly registered domains (< 30 days)
+4. Attachments with double extensions such as report.pdf.exe
+
+SECTION 3 — REPORTING CHECKLIST
+
+| Step | Action | Owner |
+| 1 | Do not click links or open suspicious attachments | Employee |
+| 2 | Forward the message as attachment to security@company.com | Employee |
+| 3 | Preserve headers for Message-ID and Received trace | SOC |
+| 4 | Block sender domain if confirmed malicious | Email Admin |
+
+SECTION 4 — REMINDERS
+
+Remember: legitimate IT staff will never ask for your password via email. When in doubt, use the official portal or call the help desk extension listed on the intranet home page.
+
+Multi-factor authentication remains the single most effective control against credential theft. Enable it on all work accounts by end of month.
+
+Thank you for helping keep our data safe.
+
+--
+Security Awareness Program
+Corporate Trust Office

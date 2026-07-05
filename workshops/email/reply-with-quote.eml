@@ -1,0 +1,70 @@
+MIME-Version: 1.0
+Date: Mon, 2 Mar 2026 14:20:00 +0800
+Message-ID: <reply-quote-demo@doc-cleaning.example.com>
+Subject: Re: 【周报】文档清洗流水线 · 第 9 周进展
+From: 李四 <lisi@doc-cleaning.example.com>
+To: 项目组 <team@doc-cleaning.example.com>
+Content-Type: multipart/alternative; boundary="----=_Part_reply_quote"
+
+------=_Part_reply_quote
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
+
+张三你好，
+
+我补充两点：
+
+1. PDF 路由阈值建议从 100 字调到 80 字，扫描件误判率会再降一点
+2. 邮件清洗应优先用 text/plain，HTML 版常带多余样式
+
+请把以上结论同步进下周计划。
+
+--
+李四
+PDF 组
+
+On Fri, Feb 28, 2026 at 9:30 AM 项目组 <team@doc-cleaning.example.com> wrote:
+
+> 各位同事好，
+>
+> 以下是文档清洗流水线项目第 9 周周报，供 RAG 入库与复盘使用。
+>
+> 一、本周进展
+>
+> - 完成 PDF 扫描件 OCR 流程，中文识别率稳定在 92% 以上
+> - 修复双栏 PDF 文字顺序错乱问题
+>
+> 四、下周计划
+>
+> - 补齐 EML 邮件清洗 notebook，覆盖引用回复与签名去除
+
+------=_Part_reply_quote
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
+
+<html><body>
+<p>张三你好，</p>
+<p>我补充两点：</p>
+<ol>
+<li>PDF 路由阈值建议从 100 字调到 80 字，扫描件误判率会再降一点</li>
+<li>邮件清洗应优先用 text/plain，HTML 版常带多余样式</li>
+</ol>
+<p>请把以上结论同步进下周计划。</p>
+<div class="gmail_signature">--<br>李四<br>PDF 组</div>
+<div class="gmail_quote">
+<div>On Fri, Feb 28, 2026 at 9:30 AM 项目组 &lt;team@doc-cleaning.example.com&gt; wrote:</div>
+<blockquote>
+<p>各位同事好，</p>
+<p>以下是文档清洗流水线项目第 9 周周报，供 RAG 入库与复盘使用。</p>
+<p>一、本周进展</p>
+<ul>
+<li>完成 PDF 扫描件 OCR 流程，中文识别率稳定在 92% 以上</li>
+<li>修复双栏 PDF 文字顺序错乱问题</li>
+</ul>
+<p>四、下周计划</p>
+<ul><li>补齐 EML 邮件清洗 notebook，覆盖引用回复与签名去除</li></ul>
+</blockquote>
+</div>
+</body></html>
+
+------=_Part_reply_quote--

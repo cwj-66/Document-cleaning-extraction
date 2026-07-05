@@ -1,0 +1,92 @@
+MIME-Version: 1.0
+Date: Fri, 28 Feb 2026 09:30:00 +0800
+Message-ID: <weekly-report-2026w09@doc-cleaning.example.com>
+Subject: 【周报】文档清洗流水线 · 第 9 周进展
+From: 项目组 <team@doc-cleaning.example.com>
+To: 全体成员 <all-hands@doc-cleaning.example.com>
+Cc: 导师 <mentor@doc-cleaning.example.com>
+Content-Type: multipart/alternative; boundary="----=_Part_weekly_2026w09"
+
+------=_Part_weekly_2026w09
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
+
+各位同事好，
+
+以下是文档清洗流水线项目第 9 周周报，供 RAG 入库与复盘使用。
+
+一、本周进展
+
+- 完成 PDF 扫描件 OCR 流程，中文识别率稳定在 92% 以上
+- 修复双栏 PDF 文字顺序错乱问题，采用 pymupdf4llm 按阅读顺序输出
+- HTML 脏页面增加 CSS 伪标题兜底，SEC 10-K 样本能正确分块
+- 表格文件支持 CSV / TSV / XLSX 三种格式统一清洗
+
+二、风险与问题
+
+1. 部分 Outlook 导出的 HTML 邮件含大量 inline style，直接入库会浪费 token
+2. 邮件线程里常夹带历史回复，若不剥离会把旧内容重复写入向量库
+3. 附件命名不规范时，元数据里的 filename 字段可能为空
+
+三、指标概览
+
+| 模块 | 负责人 | 状态 | 备注 |
+| 文档解析 | 张三 | 进行中 | docx / pptx 已稳定 |
+| PDF 路由 | 李四 | 已完成 | 文本 / 扫描 / 混排三分支 |
+| 音频转写 | 王五 | 进行中 | Whisper 中文口误待清洗 |
+| RAG 接入 | 赵六 | 待启动 | 等待 chunk schema 定稿 |
+
+四、下周计划
+
+- 补齐 EML 邮件清洗 notebook，覆盖引用回复与签名去除
+- 增加 MSG 格式探测说明（暂不实现解析，仅文档标注）
+- 用 20 份真实样本跑一遍分块长度分布，调整 chunk_size
+
+如有疑问请在本周五 17:00 前回复本邮件。
+
+--
+文档清洗项目组
+2026-02-28
+
+------=_Part_weekly_2026w09
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
+
+<!DOCTYPE html>
+<html>
+<body>
+  <p>各位同事好，</p>
+  <p>以下是文档清洗流水线项目第 9 周周报，供 RAG 入库与复盘使用。</p>
+  <h2>一、本周进展</h2>
+  <ul>
+    <li>完成 PDF 扫描件 OCR 流程，中文识别率稳定在 92% 以上</li>
+    <li>修复双栏 PDF 文字顺序错乱问题，采用 pymupdf4llm 按阅读顺序输出</li>
+    <li>HTML 脏页面增加 CSS 伪标题兜底，SEC 10-K 样本能正确分块</li>
+    <li>表格文件支持 CSV / TSV / XLSX 三种格式统一清洗</li>
+  </ul>
+  <h2>二、风险与问题</h2>
+  <ol>
+    <li>部分 Outlook 导出的 HTML 邮件含大量 inline style，直接入库会浪费 token</li>
+    <li>邮件线程里常夹带历史回复，若不剥离会把旧内容重复写入向量库</li>
+    <li>附件命名不规范时，元数据里的 filename 字段可能为空</li>
+  </ol>
+  <h2>三、指标概览</h2>
+  <table border="1">
+    <tr><th>模块</th><th>负责人</th><th>状态</th><th>备注</th></tr>
+    <tr><td>文档解析</td><td>张三</td><td>进行中</td><td>docx / pptx 已稳定</td></tr>
+    <tr><td>PDF 路由</td><td>李四</td><td>已完成</td><td>文本 / 扫描 / 混排三分支</td></tr>
+    <tr><td>音频转写</td><td>王五</td><td>进行中</td><td>Whisper 中文口误待清洗</td></tr>
+    <tr><td>RAG 接入</td><td>赵六</td><td>待启动</td><td>等待 chunk schema 定稿</td></tr>
+  </table>
+  <h2>四、下周计划</h2>
+  <ul>
+    <li>补齐 EML 邮件清洗 notebook，覆盖引用回复与签名去除</li>
+    <li>增加 MSG 格式探测说明（暂不实现解析，仅文档标注）</li>
+    <li>用 20 份真实样本跑一遍分块长度分布，调整 chunk_size</li>
+  </ul>
+  <p>如有疑问请在本周五 17:00 前回复本邮件。</p>
+  <p>--<br>文档清洗项目组<br>2026-02-28</p>
+</body>
+</html>
+
+------=_Part_weekly_2026w09--
