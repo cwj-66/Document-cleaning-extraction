@@ -1,3 +1,5 @@
+"""Generated from workshops/pdf/纯文本.pdf/clean-pure-text.ipynb; edit the notebook, then re-export."""
+
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -43,6 +45,12 @@ def extract_and_chunk(
     2. 把所有页拼成一个大 Markdown 字符串，同时记录每行对应的页码
     3. 按 # 标题行划定 section；表格单独成块；正文 section 内超长再 sliding window
     '''
+    if chunk_size <= 0:
+        raise ValueError("chunk_size must be positive")
+    if not 0 <= overlap < chunk_size:
+        raise ValueError("overlap must satisfy 0 <= overlap < chunk_size")
+    if min_chunk_size <= 0:
+        raise ValueError("min_chunk_size must be positive")
     pages = pymupdf4llm.to_markdown(str(pdf_path), page_chunks=True)
 
     lines: list[str] = []
@@ -85,6 +93,9 @@ def extract_and_chunk(
             table_lines = []
 
     for line, page_num in zip(lines, line_pages):
+        if page_num != current_page:
+            flush_table()
+            flush_text()
         current_page = page_num
         m = _HEADING_RE.match(line)
         if m:
@@ -103,23 +114,3 @@ def extract_and_chunk(
     flush_table()
     flush_text()
     return chunks
-
-from collections import Counter
-
-pdf_path = Path('layout-parser-paper-fast.pdf')
-chunks = extract_and_chunk(pdf_path)
-
-print(f'文件: {pdf_path.name}')
-print(f'RAG 分块: {len(chunks)} 块，总字符: {sum(c.char_count for c in chunks)}')
-print()
-print('section 分布（按文档顺序）：')
-counts = Counter(c.section for c in chunks)
-for sec in dict.fromkeys(c.section for c in chunks):
-    print(f'  {sec[:45]:45s} → {counts[sec]} 块')
-
-# 预览前 10 块内容
-print('=' * 60)
-for c in chunks[:10]:
-    preview = c.text[:80] + '...' if len(c.text) > 80 else c.text
-    print(f'\n[{c.chunk_index:2d}] p.{c.page:2d} section={c.section[:30]:30s} len={c.char_count}')
-    print(f'    {preview}')

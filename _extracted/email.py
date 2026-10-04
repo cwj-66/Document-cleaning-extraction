@@ -1,3 +1,5 @@
+"""Generated from workshops/email/clean-email.ipynb; edit the notebook, then re-export."""
+
 import email
 import email.policy
 import re
@@ -151,20 +153,6 @@ def extract(eml_path: Path, prefer_plain: bool = True) -> tuple[EmailMeta, list[
 
     return meta, elements
 
-from collections import Counter
-
-
-eml_path = Path('reply-with-quote.eml')
-
-meta, elements = extract(eml_path)
-body_chars = sum(len(e.text) for e in elements if e.category not in ('Subject', 'Header'))
-print(f'{eml_path.name}: {meta.subject}')
-print(f'元素 {len(elements)} 个 → {dict(Counter(e.category for e in elements))} | 正文 {body_chars} 字')
-
-for e in elements:
-    p = e.text[:70] + '...' if len(e.text) > 70 else e.text
-    print(f'[{e.index:2d}] {e.category:12s} {p}')
-
 @dataclass
 class RagChunk:
     text: str
@@ -184,6 +172,12 @@ def chunk_elements(
     overlap: int = 80,
     min_chunk_size: int = 10,
 ) -> list[RagChunk]:
+    if chunk_size <= 0:
+        raise ValueError("chunk_size must be positive")
+    if not 0 <= overlap < chunk_size:
+        raise ValueError("overlap must satisfy 0 <= overlap < chunk_size")
+    if min_chunk_size <= 0:
+        raise ValueError("min_chunk_size must be positive")
     chunks: list[RagChunk] = []
     section, buf = 'General', ''
 
@@ -219,9 +213,3 @@ def chunk_elements(
             feed(el.text + '\n')
     flush()
     return chunks
-
-chunks = chunk_elements(elements, eml_path.name)
-print(f'[{eml_path.name}] {len(chunks)} 块')
-for c in chunks:
-    p = c.text[:60] + '...' if len(c.text) > 60 else c.text
-    print(f'  {c.chunk_index:2d} | {c.section[:24]:24s} | {p}')

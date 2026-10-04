@@ -1,3 +1,5 @@
+"""Generated from workshops/media/clean-audio.ipynb; edit the notebook, then re-export."""
+
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -40,6 +42,10 @@ def transcribe_and_chunk(
     chunk_size : 每块最大字符数
     overlap_segs : 块间重叠的 segment 数量
     '''
+    if chunk_size <= 0:
+        raise ValueError("chunk_size must be positive")
+    if overlap_segs < 0:
+        raise ValueError("overlap_segs must be non-negative")
     model = whisper.load_model(model_name)
     result = model.transcribe(str(audio_path), language=language)
     segments = result['segments']  # list of {id, start, end, text, ...}
@@ -77,51 +83,3 @@ def transcribe_and_chunk(
         flush(buf_segs)
 
     return chunks
-
-# 单文件测试
-audio_path = Path('test01_20s.wav')
-
-chunks = transcribe_and_chunk(audio_path, language=None)
-
-print(f'文件: {audio_path.name}')
-print(f'RAG 分块: {len(chunks)} 块，总字符: {sum(c.char_count for c in chunks)}')
-print('=' * 60)
-for c in chunks:
-    print(f'[{c.chunk_index}] {c.start_time:.1f}s – {c.end_time:.1f}s  len={c.char_count}')
-    print(c.text)
-    print()
-
-# 批量跑 media/ 目录下所有 wav
-import wave
-
-media_dir = Path('.')
-wav_files = sorted(media_dir.glob('*.wav'))
-
-# 根据文件名猜语言：chinese → zh，其余 → en
-def guess_lang(name: str) -> str:
-    return 'zh' if 'chinese' in name else 'en'
-
-all_chunks: dict[str, list[RagChunk]] = {}
-
-for wav in wav_files:
-    with wave.open(str(wav)) as w:
-        dur = round(w.getnframes() / w.getframerate(), 1)
-    lang = guess_lang(wav.name)
-    print(f'处理: {wav.name}  ({dur}s, lang={lang})')
-    chunks = transcribe_and_chunk(wav, language=lang)
-    all_chunks[wav.name] = chunks
-    print(f'  → {len(chunks)} 块，{sum(c.char_count for c in chunks)} 字')
-
-print('\n全部完成。')
-
-# 预览每个文件的第一块
-print('=' * 60)
-for fname, chunks in all_chunks.items():
-    if not chunks:
-        continue
-    c = chunks[0]
-    preview = c.text[:100] + '...' if len(c.text) > 100 else c.text
-    print(f'{fname}')
-    print(f'  [{c.chunk_index}] {c.start_time:.1f}s–{c.end_time:.1f}s  len={c.char_count}')
-    print(f'  {preview}')
-    print()

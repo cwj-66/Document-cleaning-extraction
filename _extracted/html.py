@@ -1,3 +1,5 @@
+"""Generated from workshops/html/clean-html.ipynb; edit the notebook, then re-export."""
+
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -166,22 +168,6 @@ def extract(html_path: Path) -> tuple[list[Element], list[Element]]:
 
     return elements, meta
 
-# 在 article-zh.html 上跑一下，看提取出的元素列表
-from collections import Counter
-
-html_path = Path('.html\example-10k-1p.html')
-
-body_els, meta_els = extract(html_path)
-
-print(f'文件: {html_path.name}')
-print(f'正文元素: {len(body_els)} 个，类型分布: {dict(Counter(e.category for e in body_els))}')
-print(f'元信息: {meta_els}')
-print(f'总字符: {sum(len(e.text) for e in body_els)}')
-print()
-print('=' * 60)
-for e in body_els:
-    print(f'[{e.index:2d}] ({e.category:8s}) {e.text[:80]}')
-
 @dataclass
 class RagChunk:
     '''RAG 用的一块数据，带元信息方便检索。'''
@@ -209,6 +195,12 @@ def chunk_elements(
     - Table / Image → flush，单独成块
     - Text / ListItem → 累积；满 chunk_size 切出一块，保留 overlap 字
     '''
+    if chunk_size <= 0:
+        raise ValueError("chunk_size must be positive")
+    if not 0 <= overlap < chunk_size:
+        raise ValueError("overlap must satisfy 0 <= overlap < chunk_size")
+    if min_chunk_size <= 0:
+        raise ValueError("min_chunk_size must be positive")
     chunks: list[RagChunk] = []
     current_section = 'General'
     buffer = ''
@@ -251,24 +243,7 @@ def chunk_elements(
     flush()
     return chunks
 
-rag_chunks = chunk_elements(body_els, source_file=html_path.name, chunk_size=400)
-
-text_chunks  = [c for c in rag_chunks if not c.text.startswith('[图片:')]
-image_chunks = [c for c in rag_chunks if c.text.startswith('[图片:')]
-
-print(f'正文元素: {len(body_els)} 个 → RAG 分块: {len(rag_chunks)} 块')
-print(f'  文字块: {len(text_chunks)}  图片块: {len(image_chunks)}')
-print(f'总字符: {sum(c.char_count for c in rag_chunks)}')
-print()
-
-for c in rag_chunks:
-    tag = '🖼' if c.text.startswith('[图片:') else '📄'
-    print(f'{tag} [{c.chunk_index:2d}] section={c.section[:30]:30s} len={c.char_count:4d}')
-    print(f'   {c.text[:100]}')
-    print()
-
 import base64
-
 
 def resolve_image_path(html_path: Path, image_src: str) -> Path | None:
     '''
@@ -282,7 +257,6 @@ def resolve_image_path(html_path: Path, image_src: str) -> Path | None:
         return None  # 远程图片，暂不处理
     candidate = (html_path.parent / image_src).resolve()
     return candidate if candidate.exists() else None
-
 
 def caption_image(img_path: str, model_fn=None) -> str:
     '''
@@ -322,31 +296,3 @@ def caption_image(img_path: str, model_fn=None) -> str:
     if model_fn is None:
         return f'[待识别: {Path(img_path).name}]'
     return model_fn(img_path)
-
-
-# 对所有图片 chunk 生成 caption，追加到 text
-print('图片 caption（当前为占位符，接入模型后自动替换）：\n')
-captioned_chunks = []
-for chunk in rag_chunks:
-    if not chunk.text.startswith('[图片:'):
-        captioned_chunks.append(chunk)
-        continue
-
-    # 从对应 Element 里找 image_src
-    img_el = next(
-        (e for e in body_els if e.category == 'Image' and e.text == chunk.text),
-        None,
-    )
-    local_path = resolve_image_path(html_path, img_el.image_src) if img_el else None
-
-    if local_path:
-        cap = caption_image(str(local_path))  # 接入模型时传 model_fn=xxx
-    else:
-        cap = '[远程图片或路径无效，需手动下载后再识别]'
-
-    chunk.text = chunk.text + '\n' + cap
-    chunk.char_count = len(chunk.text)
-    captioned_chunks.append(chunk)
-    print(f'  {chunk.text[:120]}')
-
-print(f'\nCaption 完成，共 {len(captioned_chunks)} 个 chunk（含 {len(image_chunks)} 个图片 chunk）')

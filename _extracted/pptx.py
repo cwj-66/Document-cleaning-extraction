@@ -1,3 +1,5 @@
+"""Generated from workshops/ppt/clean-ppt.ipynb; edit the notebook, then re-export."""
+
 import re
 import zipfile
 from collections import Counter
@@ -163,7 +165,7 @@ import os
 
 from openai import OpenAI
 
-_CAPTION_MODEL = 'qwen3.6-flash'
+_CAPTION_MODEL = os.getenv('CAPTION_MODEL') or 'qwen3.6-flash'
 
 
 def caption_image(img_path: str) -> str:
@@ -192,6 +194,7 @@ def chunk_slides(
     source_file: str,
     chunk_size:  int = 600,
     min_chunk_size: int = 10,
+    with_api: bool = False,
 ) -> list[RagChunk]:
     '''
     PPT 分块：默认 1 页 = 1 块（标题 + 全部正文文本合并）。
@@ -202,6 +205,10 @@ def chunk_slides(
     - Image  → flush 当前页文本，图片单独成块
     - 合并文本超过 chunk_size → 按字数平切（无 overlap）
     '''
+    if chunk_size <= 0:
+        raise ValueError("chunk_size must be positive")
+    if min_chunk_size <= 0:
+        raise ValueError("min_chunk_size must be positive")
     chunks: list[RagChunk] = []
 
     def add_chunk(text: str, section: str, slide_num: int):
@@ -242,7 +249,7 @@ def chunk_slides(
                 flush_text(text_parts, section, slide_num)
                 text_parts = []
                 text = el.text
-                if el.image_path:
+                if el.image_path and with_api:
                     text += f'\n描述: {caption_image(el.image_path)}'
                 add_chunk(text, section, slide_num)
             elif el.category == 'Table':
@@ -257,18 +264,3 @@ def chunk_slides(
         flush_text(text_parts, section, slide_num)
 
     return chunks
-
-rag_chunks = chunk_slides(elements, source_file=pptx_path.name, chunk_size=600)
-
-text_chunks  = [c for c in rag_chunks if not c.text.startswith('[图片:')]
-image_chunks = [c for c in rag_chunks if c.text.startswith('[图片:')]
-
-print(f'总元素: {len(elements)} 个 → RAG 分块: {len(rag_chunks)} 块')
-print(f'  文字块: {len(text_chunks)}  图片块: {len(image_chunks)}')
-print(f'总字符: {sum(c.char_count for c in rag_chunks)}')
-print('=' * 60)
-for c in rag_chunks:
-    preview = c.text[:70] + '...' if len(c.text) > 70 else c.text
-    tag = '[图]' if c.text.startswith('[图片:') else '   '
-    print(f'\n{tag} [{c.chunk_index:2d}] p{c.slide_num:02d} section={c.section[:25]:25s} len={c.char_count:4d}')
-    print(f'    {preview}')

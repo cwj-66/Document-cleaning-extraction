@@ -16,6 +16,7 @@ _temp_unstructured/
 # 环境变量与密钥
 .env
 .env.*
+!.env.example
 
 # 系统文件
 .DS_Store
@@ -26,3 +27,14 @@ Thumbs.db
 
 # 本地学习笔记，不上传
 项目要点
+
+# 本地工具配置与原始素材备份
+.vscode/
+.local-backups/
+.local-samples/
+
+# 运行产生的提取结果与模型文件
+*_images/
+outputs/
+models/
+*.log

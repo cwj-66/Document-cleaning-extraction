@@ -1,0 +1,6 @@
+-r requirements.txt
+opencv-python>=4,<5
+numpy>=1.26,<3
+pytesseract>=0.3,<0.4
+Pillow>=10.1,<13
+openai>=1,<3

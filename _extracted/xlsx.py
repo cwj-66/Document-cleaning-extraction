@@ -1,3 +1,5 @@
+"""Generated from workshops/xlsx/clean-data.ipynb; edit the notebook, then re-export."""
+
 import csv
 import re
 from dataclasses import dataclass, field
@@ -48,6 +50,7 @@ def _xlsx_sheets(path: Path) -> dict[str, list[list[str]]]:
                 for row in ws.iter_rows()]
         if any(any(clean_text(c) for c in row) for row in rows):
             result[ws.title] = rows
+    wb.close()
     return result
 
 
@@ -87,6 +90,8 @@ def chunk_elements(
     min_chunk_size: int = 5,
 ) -> list[RagChunk]:
     '''Title 更新 section；Table 整表成一块。'''
+    if min_chunk_size <= 0:
+        raise ValueError("min_chunk_size must be positive")
     chunks: list[RagChunk] = []
     current_section = source_file
     for el in elements:
@@ -102,22 +107,3 @@ def chunk_elements(
                     chunk_index=len(chunks),
                 ))
     return chunks
-
-base = Path('.')
-all_files = [
-    base / 'game-items-zh.csv',
-    base / 'game-items-zh.tsv',
-    base / 'game-items-zh.xlsx',
-    base / 'stanley-cups.csv',
-    base / 'stanley-cups.tsv',
-    base / 'stanley-cups.xlsx',
-]
-
-for fp in all_files:
-    chunks = chunk_elements(extract(fp), source_file=fp.name)
-    print(f'[{fp.name}] {len(chunks)} 块')
-    for c in chunks:
-        print(f'  chunk {c.chunk_index} | section={c.section} | len={c.char_count}')
-        for line in c.text.split('\n'):
-            print(f'    {line}')
-    print()

@@ -1,3 +1,5 @@
+"""Generated from workshops/img/clean-image.ipynb; edit the notebook, then re-export."""
+
 import base64
 import os
 from dataclasses import dataclass, field
@@ -9,7 +11,7 @@ import pytesseract
 from openai import OpenAI
 from PIL import Image
 
-_CAPTION_MODEL = 'qwen3.6-flash'
+_CAPTION_MODEL = os.getenv('CAPTION_MODEL') or 'qwen3.6-flash'
 _OCR_LANG = 'chi_sim+eng'
 
 # ---------- 本地检测阈值（可按样例微调）----------
@@ -26,10 +28,10 @@ _PHOTO_MIN_SAT     = 35    # HSV 饱和度均值 >= 此值 → 认为有照片/�
 # Windows：Tesseract 路径
 _TESS_EXE = Path(r'C:\Program Files\Tesseract-OCR\tesseract.exe')
 _TESSDATA  = Path(r'C:\Program Files\Tesseract-OCR\tessdata')
-if _TESS_EXE.exists():
-    pytesseract.pytesseract.tesseract_cmd = str(_TESS_EXE)
+if os.getenv('TESSERACT_CMD') or _TESS_EXE.exists():
+    pytesseract.pytesseract.tesseract_cmd = os.getenv('TESSERACT_CMD') or str(_TESS_EXE)
 if _TESSDATA.exists():
-    os.environ['TESSDATA_PREFIX'] = str(_TESSDATA)
+    os.environ.setdefault('TESSDATA_PREFIX', str(_TESSDATA))
 
 
 @dataclass
@@ -167,7 +169,7 @@ _PROMPT_PHOTO = (
 def extract_and_chunk(
     img_path: Path,
     lang: str = _OCR_LANG,
-    with_api: bool = True,
+    with_api: bool = False,
 ) -> list[RagChunk]:
     '''
     单张图片 → 1 个 chunk。
@@ -213,45 +215,3 @@ def extract_and_chunk(
         chunk_index=0,
         image_path=str(img_path.resolve()),
     )]
-
-# 单文件测试（先不调 API，只看本地检测结果）
-img_path = Path('DA-1p.png')
-
-comps, ocr = detect_components(img_path)
-print(f'文件: {img_path.name}')
-print(f'检测成分: {comps}')
-print(f'OCR 字数: {len(ocr)}')
-print('=' * 60)
-
-# 完整跑（含 API）
-chunks = extract_and_chunk(img_path)
-c = chunks[0]
-print(f'chunk 字符: {c.char_count}')
-print(c.text)
-
-# 批量跑 img/ 目录下所有图片
-img_dir  = Path('.')
-img_exts = {'.jpg', '.jpeg', '.png', '.webp', '.bmp', '.tiff'}
-img_files = sorted(p for p in img_dir.iterdir() if p.suffix.lower() in img_exts)
-
-all_chunks: dict[str, list[RagChunk]] = {}
-
-for img in img_files:
-    comps, _ = detect_components(img)
-    print(f'处理: {img.name:<40s} 成分: {comps}')
-    chunks = extract_and_chunk(img)
-    all_chunks[img.name] = chunks
-    print(f'  → {len(chunks)} 块，{sum(c.char_count for c in chunks)} 字')
-
-print('\n全部完成。')
-
-# 预览每个文件的结果
-print('=' * 60)
-for fname, chunks in all_chunks.items():
-    if not chunks:
-        continue
-    c = chunks[0]
-    preview = c.text[:150] + '...' if len(c.text) > 150 else c.text
-    print(f'{fname}  len={c.char_count}')
-    print(preview)
-    print()

@@ -1,15 +1,18 @@
+"""Generated from workshops/pdf/扫描.pdf/clean-scan-pdf.ipynb; edit the notebook, then re-export."""
+
 import os
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
+import fitz
 import pymupdf4llm
 
 # Windows：Tesseract 的语言数据路径（装完通常在这里）
 # pymupdf4llm 通过这个环境变量找 eng.traineddata
 _TESSDATA = Path(r'C:\Program Files\Tesseract-OCR\tessdata')
 if _TESSDATA.exists():
-    os.environ['TESSDATA_PREFIX'] = str(_TESSDATA)
+    os.environ.setdefault('TESSDATA_PREFIX', str(_TESSDATA))
 
 
 # Markdown 标题行：# / ## / ### 开头
@@ -40,17 +43,33 @@ def extract_and_chunk(
     chunk_size: int = 500,
     overlap: int = 100,
     min_chunk_size: int = 20,
+    ocr_language: str = 'eng',
 ) -> list[RagChunk]:
     '''
     解析扫描 PDF 并做 RAG 分块。
 
     流程
     ----
-    1. pymupdf4llm 检测到无文本层 → 自动触发 OCR → 输出 Markdown
+    1. 无文本层页面显式调用 PyMuPDF + Tesseract OCR；有文字的页面转 Markdown
     2. 把所有页拼成一个 Markdown 字符串，记录每行对应的页码
     3. 和纯文本 PDF 完全相同：# 标题划 section，表格成块，正文 sliding window
     '''
-    pages = pymupdf4llm.to_markdown(str(pdf_path), page_chunks=True)
+    if chunk_size <= 0:
+        raise ValueError("chunk_size must be positive")
+    if not 0 <= overlap < chunk_size:
+        raise ValueError("overlap must satisfy 0 <= overlap < chunk_size")
+    if min_chunk_size <= 0:
+        raise ValueError("min_chunk_size must be positive")
+    pages = []
+    with fitz.open(str(pdf_path)) as doc:
+        for index, page in enumerate(doc):
+            if not page.get_text().strip():
+                # Explicit OCR also works without the optional layout engine.
+                textpage = page.get_textpage_ocr(language=ocr_language, dpi=300, full=True)
+                text = page.get_text('text', textpage=textpage)
+            else:
+                text = pymupdf4llm.to_markdown(str(pdf_path), pages=[index])
+            pages.append({'metadata': {'page_number': index + 1}, 'text': text})
 
     lines: list[str] = []
     line_pages: list[int] = []
@@ -92,6 +111,9 @@ def extract_and_chunk(
             table_lines = []
 
     for line, page_num in zip(lines, line_pages):
+        if page_num != current_page:
+            flush_table()
+            flush_text()
         current_page = page_num
         m = _HEADING_RE.match(line)
         if m:
@@ -110,23 +132,3 @@ def extract_and_chunk(
     flush_table()
     flush_text()
     return chunks
-
-from collections import Counter
-
-pdf_path = Path('multipage-6p.pdf')
-chunks = extract_and_chunk(pdf_path)
-
-print(f'文件: {pdf_path.name}')
-print(f'RAG 分块: {len(chunks)} 块，总字符: {sum(c.char_count for c in chunks)}')
-print()
-print('section 分布（按文档顺序）：')
-counts = Counter(c.section for c in chunks)
-for sec in dict.fromkeys(c.section for c in chunks):
-    print(f'  {sec[:45]:45s} → {counts[sec]} 块')
-
-# 预览前 10 块内容
-print('=' * 60)
-for c in chunks[:10]:
-    preview = c.text[:80] + '...' if len(c.text) > 80 else c.text
-    print(f'\n[{c.chunk_index:2d}] p.{c.page:2d} section={c.section[:30]:30s} len={c.char_count}')
-    print(f'    {preview}')

@@ -1,3 +1,5 @@
+"""Generated from workshops/pdf/图文混排.pdf/clean-mixed-pdf.ipynb; edit the notebook, then re-export."""
+
 import base64
 import os
 import re
@@ -9,7 +11,7 @@ import pymupdf4llm
 from openai import OpenAI
 
 _HEADING_RE = re.compile(r'^(#{1,3})\s+(.+)', re.MULTILINE)
-_CAPTION_MODEL = 'qwen3.6-flash'
+_CAPTION_MODEL = os.getenv('CAPTION_MODEL') or 'qwen3.6-flash'
 
 
 @dataclass
@@ -70,14 +72,21 @@ def extract_and_chunk(
     chunk_size: int = 500,
     overlap: int = 100,
     min_chunk_size: int = 20,
+    with_api: bool = False,
 ) -> list[RagChunk]:
     '''
     文字分块 + 图片分块，按 (page, y0) 排序合并。
 
-    - 文字：pymupdf4llm → 逐行处理，生成文字块；再用 PyMuPDF 拿到每块的真实 y0
+    - 文字：pymupdf4llm → 逐行处理，生成文字块；再用 PyMuPDF 估算每块的 y0
     - 图片：PyMuPDF 抽图，本身就有 y0
-    - 合并：两者一起按 y0 排序，保持页面阅读顺序
+    - 合并：两者一起按 y0 排序，近似页面阅读顺序
     '''
+    if chunk_size <= 0:
+        raise ValueError("chunk_size must be positive")
+    if not 0 <= overlap < chunk_size:
+        raise ValueError("overlap must satisfy 0 <= overlap < chunk_size")
+    if min_chunk_size <= 0:
+        raise ValueError("min_chunk_size must be positive")
     # --- 文字分块 ---
     pages_md = pymupdf4llm.to_markdown(str(pdf_path), page_chunks=True)
     lines, line_pages = [], []
@@ -118,6 +127,9 @@ def extract_and_chunk(
             table = []
 
     for line, page_num in zip(lines, line_pages):
+        if page_num != cur_page:
+            flush_table()
+            flush_text()
         cur_page = page_num
         page_sections[page_num] = section
         m = _HEADING_RE.match(line)
@@ -135,7 +147,7 @@ def extract_and_chunk(
                 buf += line + ' '
     flush_table(); flush_text()
 
-    # --- 用 PyMuPDF 给文字块配真实 y0 ---
+    # --- 用 PyMuPDF 给文字块估算 y0 ---
     # pymupdf4llm 按从上到下处理，所以第 k 个文字块对应第 k 个文本区域的 y0
     doc = fitz.open(str(pdf_path))
     for page_num, page in enumerate(doc, start=1):
@@ -166,7 +178,7 @@ def extract_and_chunk(
     merged.sort(key=lambda c: (c.page, c.y0))
     for i, c in enumerate(merged):
         c.chunk_index = i
-    return add_captions(merged)
+    return add_captions(merged) if with_api else merged
 
 
 def caption_image(img_path: str) -> str:
@@ -205,16 +217,3 @@ def add_captions(chunks: list[RagChunk]) -> list[RagChunk]:
             image_path=c.image_path, y0=c.y0,
         ))
     return out
-
-pdf_path = Path('insider-threat-101-factsheet.pdf')
-chunks = extract_and_chunk(pdf_path)
-
-n_img = sum(1 for c in chunks if c.image_path)
-print(f'文件: {pdf_path.name}  分块: {len(chunks)}（图片 {n_img}）')
-print('=' * 60)
-for c in chunks:
-    tag = '[图]' if c.image_path else '   '
-    print(f'{tag} [{c.chunk_index}] p.{c.page} y0={c.y0:6.1f}  section={c.section}  len={c.char_count}')
-    print('-' * 60)
-    print(c.text)
-    print()

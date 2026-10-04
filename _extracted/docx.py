@@ -1,3 +1,5 @@
+"""Generated from workshops/word/clean-pure-text.ipynb; edit the notebook, then re-export."""
+
 import re
 import zipfile
 from collections import Counter
@@ -99,7 +101,7 @@ import os
 
 from openai import OpenAI
 
-_CAPTION_MODEL = 'qwen3.6-flash'
+_CAPTION_MODEL = os.getenv('CAPTION_MODEL') or 'qwen3.6-flash'
 
 
 def caption_image(img_path: str) -> str:
@@ -195,6 +197,7 @@ def chunk_elements(
     chunk_size: int = 400,
     overlap: int = 80,
     min_chunk_size: int = 10,
+    with_api: bool = False,
 ) -> list[RagChunk]:
     '''
     基于 unstructured 分类 + 启发式标题检测做 RAG 分块（滑动窗口）。
@@ -203,6 +206,12 @@ def chunk_elements(
     - Table → flush，表格单独成块
     - 其余正文 → 累积；满 chunk_size 切出一块，保留 overlap 字继续拼接
     '''
+    if chunk_size <= 0:
+        raise ValueError("chunk_size must be positive")
+    if not 0 <= overlap < chunk_size:
+        raise ValueError("overlap must satisfy 0 <= overlap < chunk_size")
+    if min_chunk_size <= 0:
+        raise ValueError("min_chunk_size must be positive")
     chunks: list[RagChunk] = []
     current_section = 'General'
     buffer = ''
@@ -238,7 +247,7 @@ def chunk_elements(
             img_section = m.group(1) if m else current_section
             if len(el.text.strip()) >= min_chunk_size:
                 text = el.text.strip()
-                if el.image_path:
+                if el.image_path and with_api:
                     text += f'\n描述: {caption_image(el.image_path)}'
                 chunks.append(RagChunk(
                     text=text,
@@ -253,17 +262,3 @@ def chunk_elements(
                 buffer = buffer[chunk_size - overlap:]
     flush()
     return chunks
-
-# 合并文字/表格元素 + 图片元素，一起送入分块
-all_elements = body + images
-
-rag_chunks = chunk_elements(all_elements, source_file=docx_path.name, chunk_size=400, overlap=80)
-
-print(f'文字/表格元素: {len(body)} 个 + 图片元素: {len(images)} 个 → RAG 分块: {len(rag_chunks)} 块')
-print(f'总字符: {sum(c.char_count for c in rag_chunks)}')
-print('=' * 60)
-for c in rag_chunks:
-    preview = c.text[:70] + '...' if len(c.text) > 70 else c.text
-    tag = '[图]' if c.text.startswith('[图片:') else '   '
-    print(f'\n{tag} [{c.chunk_index:2d}] section={c.section[:25]:25s} len={c.char_count:4d}')
-    print(f'    {preview}')

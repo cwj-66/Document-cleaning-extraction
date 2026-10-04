@@ -1,0 +1,5 @@
+# Lightweight examples: HTML, EML, CSV, TSV and XLSX.
+beautifulsoup4>=4.12,<5
+openpyxl>=3.1,<4
+jupyterlab>=4,<5
+ipykernel>=6,<8
