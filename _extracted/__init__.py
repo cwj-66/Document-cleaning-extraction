@@ -1,1 +1,1 @@
-"""Per-format notebook exports. Import individual modules as needed."""
+"""Per-format wrappers over document_cleaning; no models load on import."""

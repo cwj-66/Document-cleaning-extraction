@@ -1,2 +1,2 @@
--r requirements.txt
-openai-whisper
+# Qwen3-ASR; follow upstream PyTorch/CUDA installation instructions.
+qwen-asr

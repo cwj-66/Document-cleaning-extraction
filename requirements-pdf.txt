@@ -1,0 +1,2 @@
+# MinerU 4 SDK; prepare runtime/weights using upstream instructions.
+mineru>=4.0,<5

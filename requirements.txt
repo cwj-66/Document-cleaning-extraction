@@ -1,5 +1,3 @@
-# Lightweight examples: HTML, EML, CSV, TSV and XLSX.
-beautifulsoup4>=4.12,<5
-openpyxl>=3.1,<4
+# Notebook UI only. Install ONE engine file in its own environment.
 jupyterlab>=4,<5
 ipykernel>=6,<8
